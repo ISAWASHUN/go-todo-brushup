@@ -2,26 +2,16 @@ package main
 
 import (
 	"fmt"
+	"go-todo-brushup/models"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
-
-// Task モデルはデータベースの tasks テーブルを表します
-type Task struct {
-	ID          uint           `gorm:"primary_key"`
-	Task        string         `gorm:"size:255"`
-	IsCompleted bool           `gorm:"default:false"`
-	CreatedAt   time.Time      `gorm:"default:CURRENT_TIMESTAMP"`
-	UpdatedAt   time.Time      `gorm:"default:CURRENT_TIMESTAMP"`
-	DeletedAt   *time.Time     `gorm:"index"`
-}
 
 func main() {
 	// .envファイルから環境変数を読み込む
@@ -47,21 +37,21 @@ func main() {
 	}
 
 	// データベースにテーブルを作成
-	db.AutoMigrate(&Task{})
+	db.AutoMigrate(&models.Task{})
 
 	// Ginエンジンのインスタンスを作成
 	r := gin.Default()
 
 	// タスクを取得するエンドポイント
 	r.GET("/tasks", func(c *gin.Context) {
-		var tasks []Task
+		var tasks []models.Task
 		db.Find(&tasks)
 		c.JSON(http.StatusOK, tasks)
 	})
 
 	// 新しいタスクを作成するエンドポイント
 	r.POST("/tasks", func(c *gin.Context) {
-		var task Task
+		var task models.Task
 		if err := c.ShouldBindJSON(&task); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -72,7 +62,7 @@ func main() {
 
 	// タスクを更新するエンドポイント
 	r.PUT("/tasks/:id", func(c *gin.Context) {
-		var task Task
+		var task models.Task
 		id := c.Param("id")
 
 		if err := db.First(&task, id).Error; err != nil {
@@ -91,7 +81,7 @@ func main() {
 
 	// タスクを削除するエンドポイント
 	r.DELETE("/tasks/:id", func(c *gin.Context) {
-		var task Task
+		var task models.Task
 		id := c.Param("id")
 
 		if err := db.First(&task, id).Error; err != nil {
